@@ -92,7 +92,7 @@ The input JSON file must have this structure:
 
 ### Field Descriptions
 
-- `version`: Protocol version (typically 1)
+- `version`: **Required.** Protocol version. **Only version 1 is supported.** The program will exit with an error for any other version.
 - `kdfParams.salt`: 16-byte salt for Argon2id, base64-encoded
 - `kdfParams.memLimit`: Memory limit in bytes for Argon2id (typically 64MB = 67108864)
 - `kdfParams.opsLimit`: Operation count for Argon2id (typically 2)
@@ -104,7 +104,7 @@ The input JSON file must have this structure:
 ### Run the Full Test Suite
 
 ```bash
-# Run all 13 tests
+# Run all 16 tests
 pytest tests/test_decrypt.py -v
 
 # Run specific test class
@@ -130,12 +130,15 @@ pytest tests/test_decrypt.py::TestDeriveKey::test_derive_key_with_test_data -v
 **Integration Tests (1 test)**
 - Test full KDF + decryption workflow
 
-**JSON Decryption Tests (5 tests)**
+**JSON Decryption Tests (8 tests)**
 - Verify decryption from valid JSON file
 - Verify error handling for missing files
 - Verify error handling for invalid JSON
 - Verify error handling for missing JSON fields
 - Verify error handling for wrong password
+- Verify error handling for unsupported version (version 2)
+- Verify error handling for missing version field
+- Verify error handling for null version
 
 ## How It Works
 

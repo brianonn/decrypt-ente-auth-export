@@ -1,6 +1,6 @@
 import base64
+import nacl.bindings
 import nacl.pwhash
-import nacl.secret
 import sys
 
 ## TEST DATA
@@ -25,7 +25,7 @@ def derive_key(password: str, salt: bytes, ops_limit: int, mem_limit: int) -> by
         password: The password to derive the key from.
         salt: The salt bytes (decoded from base64).
         ops_limit: Operations limit for Argon2id.
-        mem_limit: Memory limit in bytes (will be converted to KB for nacl).
+        mem_limit: Memory limit in bytes.
 
     Returns:
         32-byte derived key.
@@ -35,42 +35,81 @@ def derive_key(password: str, salt: bytes, ops_limit: int, mem_limit: int) -> by
         password.encode(),
         salt,
         opslimit=ops_limit,
-        memlimit=mem_limit // 1024,  # Ente's memLimit is in bytes, but uses KB
+        memlimit=mem_limit,
     )
 
 
 def decrypt_data(key: bytes, encrypted_payload: bytes, nonce: bytes) -> bytes:
-    """Decrypt data using XChaCha20-Poly1305.
+    """Decrypt data using XChaCha20-Poly1305 secretstream.
 
     Args:
         key: The 32-byte derived key.
         encrypted_payload: The encrypted data bytes (decoded from base64).
-        nonce: The nonce bytes (decoded from base64).
+        nonce: The secretstream header bytes (decoded from base64).
 
     Returns:
         Decrypted plaintext bytes.
     """
-    aead = nacl.secret.Aead(key)
-    return aead.decrypt(encrypted_payload, None, nonce)
+    state = nacl.bindings.crypto_secretstream_xchacha20poly1305_state()
+    nacl.bindings.crypto_secretstream_xchacha20poly1305_init_pull(state, nonce, key)
+    plaintext, _tag = nacl.bindings.crypto_secretstream_xchacha20poly1305_pull(
+        state, encrypted_payload
+    )
+    return plaintext
 
-# todo - put a __main__ gate here to check for main
+def run_tests() -> None:
+    """Run built-in tests for KDF and decryption functions."""
+    try:
+        # Test 1: Derive key
+        salt = base64.b64decode(TEST_SALT_B64)
+        derived_key = derive_key(TEST_PASSWORD, salt, TEST_OPS_LIMIT, TEST_MEM_LIMIT)
+        derived_key_b64 = base64.b64encode(derived_key).decode()
 
-# todo check for arg1 --test and call the kdf func with test data for the key
-# validate the key matches the expected key
-# then call the decryption function for decrypting the test data with the derived test key
-# validate the decrypted plaintext matches the expected plain_text
-# print the test results and exit
+        if derived_key_b64 != TEST_EXPECTED_DERIVED_KEY_B64:
+            print(
+                f"❌ KDF test failed: derived key mismatch\n"
+                f"   Expected: {TEST_EXPECTED_DERIVED_KEY_B64}\n"
+                f"   Got:      {derived_key_b64}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        print("✓ KDF test passed")
 
-# todo - if arg1 not --test, then here we check for arg1 as a json file
-# todo - and then read the json file from arg1 and fill in the JSON data
-# below
+        # Test 2: Decrypt data
+        encrypted_payload = base64.b64decode(TEST_ENCRYPTED_B64)
+        nonce = base64.b64decode(TEST_NONCE_B64)
+        decrypted = decrypt_data(derived_key, encrypted_payload, nonce)
+        decrypted_str = decrypted.decode()
 
-# read actual values from the JSON file
-version = ""  # .version
-salt_b64 = ""  # .kdfParams.salt
-mem_limit = 0  # .kdfParams.memlimit
-ops_limit = 0  # .kdfParams.opslimit
-nonce_b64 = ""  # .encryptionNonce
-encrypted_b64 = ""  # .encryptedData
+        if decrypted_str != TEST_EXPECTED_PLAINTEXT:
+            print(
+                f"❌ Decryption test failed: plaintext mismatch\n"
+                f"   Expected: {TEST_EXPECTED_PLAINTEXT}\n"
+                f"   Got:      {decrypted_str}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        print("✓ Decryption test passed")
+        print("\n✓ All tests passed!")
 
-# todo  then call the kdf function and the decryption function and print the plain text
+    except Exception as e:
+        print(f"❌ Test failed with error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        run_tests()
+    else:
+        # todo - if arg1 not --test, then here we check for arg1 as a json file
+        # todo - and then read the json file from arg1 and fill in the JSON data
+
+        # read actual values from the JSON file
+        version = ""  # .version
+        salt_b64 = ""  # .kdfParams.salt
+        mem_limit = 0  # .kdfParams.memlimit
+        ops_limit = 0  # .kdfParams.opslimit
+        nonce_b64 = ""  # .encryptionNonce
+        encrypted_b64 = ""  # .encryptedData
+
+        # todo  then call the kdf function and the decryption function and print the plain text

@@ -129,8 +129,8 @@ class TestJsonDecryption:
             "version": 1,
             "kdfParams": {
                 "salt": TEST_SALT_B64,
-                "memlimit": TEST_MEM_LIMIT,
-                "opslimit": TEST_OPS_LIMIT,
+                "memLimit": TEST_MEM_LIMIT,
+                "opsLimit": TEST_OPS_LIMIT,
             },
             "encryptionNonce": TEST_NONCE_B64,
             "encryptedData": TEST_ENCRYPTED_B64,
@@ -190,8 +190,8 @@ class TestJsonDecryption:
             "version": 1,
             "kdfParams": {
                 "salt": TEST_SALT_B64,
-                "memlimit": TEST_MEM_LIMIT,
-                "opslimit": TEST_OPS_LIMIT,
+                "memLimit": TEST_MEM_LIMIT,
+                "opsLimit": TEST_OPS_LIMIT,
             },
             "encryptionNonce": TEST_NONCE_B64,
             "encryptedData": TEST_ENCRYPTED_B64,

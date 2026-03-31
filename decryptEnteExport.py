@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 ## TEST DATA
+# from: https://github.com/ente-io/ente/blob/main/cli/internal/crypto/crypto_test.go#L10
 TEST_PASSWORD = "test_password"
 TEST_SALT_B64 = "vd0dcYMGNLKn/gpT6uTFTw=="
 TEST_MEM_LIMIT = 64 * 1024 * 1024
@@ -134,8 +135,8 @@ def decrypt_from_json(
         try:
             version = data.get("version", "")
             salt_b64 = data["kdfParams"]["salt"]
-            mem_limit = data["kdfParams"]["memlimit"]
-            ops_limit = data["kdfParams"]["opslimit"]
+            mem_limit = data["kdfParams"]["memLimit"]
+            ops_limit = data["kdfParams"]["opsLimit"]
             nonce_b64 = data["encryptionNonce"]
             encrypted_b64 = data["encryptedData"]
         except KeyError as e:

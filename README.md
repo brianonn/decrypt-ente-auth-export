@@ -82,8 +82,8 @@ The input JSON file must have this structure:
   "version": 1,
   "kdfParams": {
     "salt": "base64-encoded-salt",
-    "memlimit": 67108864,
-    "opslimit": 2
+    "memLimit": 67108864,
+    "opsLimit": 2
   },
   "encryptionNonce": "base64-encoded-nonce",
   "encryptedData": "base64-encoded-ciphertext"
@@ -94,8 +94,8 @@ The input JSON file must have this structure:
 
 - `version`: Protocol version (typically 1)
 - `kdfParams.salt`: 16-byte salt for Argon2id, base64-encoded
-- `kdfParams.memlimit`: Memory limit in bytes for Argon2id (typically 64MB = 67108864)
-- `kdfParams.opslimit`: Operation count for Argon2id (typically 2)
+- `kdfParams.memLimit`: Memory limit in bytes for Argon2id (typically 64MB = 67108864)
+- `kdfParams.opsLimit`: Operation count for Argon2id (typically 2)
 - `encryptionNonce`: XChaCha20-Poly1305 secretstream header (24 bytes), base64-encoded
 - `encryptedData`: Encrypted payload (ciphertext + authentication tag), base64-encoded
 
@@ -142,7 +142,7 @@ pytest tests/test_decrypt.py::TestDeriveKey::test_derive_key_with_test_data -v
 ### 1. Key Derivation (Argon2id)
 
 ```
-password + salt + memlimit + opslimit → 32-byte key
+password + salt + memLimit + opsLimit → 32-byte key
 ```
 
 Uses libsodium's Argon2id algorithm with:

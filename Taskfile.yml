@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  VENV: .venv
+
+tasks:
+  default:
+    cmds:
+      - task -l || go-task -l
+    silent: true
+
+  init:
+    desc: Create python virtual environment.
+    silent: true
+    cmds:
+      - |
+        echo "Creating Python Virtual Environment at {{.VENV}}"
+        python3 -m venv {{.VENV}}
+        source {{.VENV}}/bin/activate
+        pip3 install pip --upgrade --index-url=https://pypi.org/simple/
+        pip3 install wheel setuptools --upgrade --index-url=https://pypi.org/simple/
+        pip3 freeze > requirements.txt
+    status:
+      - test -d {{.VENV}}
+
+  test:
+    desc: run pytests
+    cmds:
+      - python3 -mpytest tests/test_decrypt.py -v
+
+  freeze:
+    desc: Update dependancy lock files
+    cmds:
+      - python3 -mpip freeze > requirements.txt
+
+  clean:
+    desc: Remove build artifacts and Python caches
+    cmds:
+      # Remove build directories
+      - rm -rf build/
+      - rm -rf dist/
+      - rm -rf *.egg-info
+      # Remove Python bytecode and cache folders
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - find . -type d -name ".pytest_cache" -exec rm -rf {} +
+      - find . -type d -name ".mypy_cache" -exec rm -rf {} +
+      - find . -type d -name ".ruff_cache" -exec rm -rf {} +
+      # remove virtual environment
+      - rm -rf {{.VENV}}/
+    silent: false
+

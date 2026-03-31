@@ -1,5 +1,6 @@
 AGENT.md
 ai-config/
+__pycache__/
 # -- BEGIN: Added by _setup-ai.sh
 CLAUDE.md
 .cursorrules

@@ -1,0 +1,6 @@
+AGENT.md
+ai-config/
+# -- BEGIN: Added by _setup-ai.sh
+CLAUDE.md
+.cursorrules
+# ---- END: Added by _setup-ai.sh

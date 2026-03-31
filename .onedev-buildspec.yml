@@ -1,0 +1,22 @@
+version: 44
+jobs:
+- name: Push to Github
+  steps:
+  - type: PushRepository
+    name: push
+    remoteUrl: https://github.com/brianonn/decrypt-ente-auth-export.git
+    userName: brianonn
+    passwordSecret: github-access-token
+    force: false
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    userMatch: anyone
+    projects: users/brian/decrypt-ente-auth-export
+  - type: TagCreateTrigger
+    projects: users/brian/decrypt-ente-auth-export
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 14400

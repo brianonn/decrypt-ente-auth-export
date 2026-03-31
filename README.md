@@ -140,6 +140,34 @@ pytest tests/test_decrypt.py::TestDeriveKey::test_derive_key_with_test_data -v
 - Verify error handling for missing version field
 - Verify error handling for null version
 
+## Development Tasks
+
+This project uses [Task](https://taskfile.dev/) for common development operations. Ensure you have `task` or `go-task` installed, then run:
+
+```bash
+# List available tasks
+task
+
+# Initialize development environment (create virtual environment)
+task init
+
+# Run tests
+task test
+
+# Update dependency lock files
+task freeze
+
+# Clean build artifacts and caches
+task clean
+```
+
+### Task Targets
+
+- **init:** Create a Python virtual environment and install base dependencies
+- **test:** Run the full test suite with pytest
+- **freeze:** Update `requirements.txt` with current dependencies
+- **clean:** Remove all build artifacts, Python caches, and virtual environment
+
 ## How It Works
 
 ### 1. Key Derivation (Argon2id)

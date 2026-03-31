@@ -1,7 +1,9 @@
 import base64
+import json
 import nacl.bindings
 import nacl.pwhash
 import sys
+from pathlib import Path
 
 ## TEST DATA
 TEST_PASSWORD = "test_password"
@@ -97,19 +99,91 @@ def run_tests() -> None:
         sys.exit(1)
 
 
+def decrypt_from_json(
+    json_file: str, password: str, output_file=None
+) -> bytes:
+    """Decrypt an Ente Auth export file.
+
+    Args:
+        json_file: Path to the JSON export file.
+        password: Password for decryption.
+        output_file: Optional file-like object to write plaintext to (default: sys.stdout.buffer).
+
+    Returns:
+        The decrypted plaintext as bytes.
+
+    Raises:
+        FileNotFoundError: If the JSON file doesn't exist.
+        json.JSONDecodeError: If the JSON is invalid.
+        KeyError: If required fields are missing from the JSON.
+        ValueError: If decryption fails.
+    """
+    if output_file is None:
+        output_file = sys.stdout.buffer
+
+    try:
+        # Read and parse JSON file
+        file_path = Path(json_file)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {json_file}")
+
+        with open(file_path) as f:
+            data = json.load(f)
+
+        # Extract required fields
+        try:
+            version = data.get("version", "")
+            salt_b64 = data["kdfParams"]["salt"]
+            mem_limit = data["kdfParams"]["memlimit"]
+            ops_limit = data["kdfParams"]["opslimit"]
+            nonce_b64 = data["encryptionNonce"]
+            encrypted_b64 = data["encryptedData"]
+        except KeyError as e:
+            raise KeyError(f"Missing required field in JSON: {e}") from e
+
+        # Decode inputs
+        salt = base64.b64decode(salt_b64)
+        nonce = base64.b64decode(nonce_b64)
+        encrypted_payload = base64.b64decode(encrypted_b64)
+
+        # Derive key and decrypt
+        key = derive_key(password, salt, ops_limit, mem_limit)
+        plaintext = decrypt_data(key, encrypted_payload, nonce)
+
+        # Output to file
+        output_file.write(plaintext)
+
+        return plaintext
+
+    except FileNotFoundError as e:
+        print(f"❌ File error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"❌ Invalid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+    except KeyError as e:
+        print(f"❌ {e}", file=sys.stderr)
+        sys.exit(1)
+    except (ValueError, TypeError) as e:
+        print(f"❌ Decryption error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
         run_tests()
+    elif len(sys.argv) > 1:
+        json_file = sys.argv[1]
+        # Prompt for password
+        import getpass
+
+        password = getpass.getpass("Enter password: ")
+        decrypt_from_json(json_file, password)
     else:
-        # todo - if arg1 not --test, then here we check for arg1 as a json file
-        # todo - and then read the json file from arg1 and fill in the JSON data
-
-        # read actual values from the JSON file
-        version = ""  # .version
-        salt_b64 = ""  # .kdfParams.salt
-        mem_limit = 0  # .kdfParams.memlimit
-        ops_limit = 0  # .kdfParams.opslimit
-        nonce_b64 = ""  # .encryptionNonce
-        encrypted_b64 = ""  # .encryptedData
-
-        # todo  then call the kdf function and the decryption function and print the plain text
+        print("Usage: python decryptEnteExport.py [--test | <json_file>]", file=sys.stderr)
+        print("  --test: Run built-in tests", file=sys.stderr)
+        print("  <json_file>: Path to Ente Auth export JSON file", file=sys.stderr)
+        sys.exit(1)

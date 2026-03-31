@@ -1,4 +1,5 @@
 import base64
+import json
 import pytest
 import sys
 from pathlib import Path
@@ -113,3 +114,92 @@ class TestIntegration:
 
         # Verify
         assert decrypted.decode() == TEST_EXPECTED_PLAINTEXT
+
+
+class TestJsonDecryption:
+    """Tests for JSON file decryption mode."""
+
+    def test_decrypt_from_valid_json(self, tmp_path: Path) -> None:
+        """Test decryption from a valid JSON file."""
+        from decryptEnteExport import decrypt_from_json
+        import io
+
+        # Create a test JSON file
+        json_data = {
+            "version": 1,
+            "kdfParams": {
+                "salt": TEST_SALT_B64,
+                "memlimit": TEST_MEM_LIMIT,
+                "opslimit": TEST_OPS_LIMIT,
+            },
+            "encryptionNonce": TEST_NONCE_B64,
+            "encryptedData": TEST_ENCRYPTED_B64,
+        }
+
+        json_file = tmp_path / "test_export.json"
+        json_file.write_text(json.dumps(json_data))
+
+        # Call decrypt_from_json with a BytesIO output
+        captured_output = io.BytesIO()
+        result = decrypt_from_json(str(json_file), TEST_PASSWORD, captured_output)
+
+        assert result == TEST_EXPECTED_PLAINTEXT.encode()
+        assert captured_output.getvalue() == TEST_EXPECTED_PLAINTEXT.encode()
+
+    def test_decrypt_from_missing_file(self, tmp_path: Path) -> None:
+        """Test that missing JSON file raises error."""
+        from decryptEnteExport import decrypt_from_json
+
+        json_file = tmp_path / "nonexistent.json"
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1
+
+    def test_decrypt_from_invalid_json(self, tmp_path: Path) -> None:
+        """Test that invalid JSON raises error."""
+        from decryptEnteExport import decrypt_from_json
+
+        json_file = tmp_path / "invalid.json"
+        json_file.write_text("{ invalid json }")
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1
+
+    def test_decrypt_from_missing_fields(self, tmp_path: Path) -> None:
+        """Test that JSON missing required fields raises error."""
+        from decryptEnteExport import decrypt_from_json
+        import json
+
+        json_data = {"version": 1}  # Missing required fields
+
+        json_file = tmp_path / "incomplete.json"
+        json_file.write_text(json.dumps(json_data))
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1
+
+    def test_decrypt_from_wrong_password(self, tmp_path: Path) -> None:
+        """Test that wrong password causes decryption to fail."""
+        from decryptEnteExport import decrypt_from_json
+        import json
+
+        json_data = {
+            "version": 1,
+            "kdfParams": {
+                "salt": TEST_SALT_B64,
+                "memlimit": TEST_MEM_LIMIT,
+                "opslimit": TEST_OPS_LIMIT,
+            },
+            "encryptionNonce": TEST_NONCE_B64,
+            "encryptedData": TEST_ENCRYPTED_B64,
+        }
+
+        json_file = tmp_path / "test_export.json"
+        json_file.write_text(json.dumps(json_data))
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), "wrong_password")
+        assert exc_info.value.code == 1

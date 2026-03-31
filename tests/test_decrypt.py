@@ -203,3 +203,71 @@ class TestJsonDecryption:
         with pytest.raises(SystemExit) as exc_info:
             decrypt_from_json(str(json_file), "wrong_password")
         assert exc_info.value.code == 1
+
+    def test_decrypt_from_invalid_version(self, tmp_path: Path) -> None:
+        """Test that unsupported version causes error."""
+        from decryptEnteExport import decrypt_from_json
+        import json
+
+        json_data = {
+            "version": 2,
+            "kdfParams": {
+                "salt": TEST_SALT_B64,
+                "memLimit": TEST_MEM_LIMIT,
+                "opsLimit": TEST_OPS_LIMIT,
+            },
+            "encryptionNonce": TEST_NONCE_B64,
+            "encryptedData": TEST_ENCRYPTED_B64,
+        }
+
+        json_file = tmp_path / "test_export.json"
+        json_file.write_text(json.dumps(json_data))
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1
+
+    def test_decrypt_from_missing_version(self, tmp_path: Path) -> None:
+        """Test that missing version causes error."""
+        from decryptEnteExport import decrypt_from_json
+        import json
+
+        json_data = {
+            "kdfParams": {
+                "salt": TEST_SALT_B64,
+                "memLimit": TEST_MEM_LIMIT,
+                "opsLimit": TEST_OPS_LIMIT,
+            },
+            "encryptionNonce": TEST_NONCE_B64,
+            "encryptedData": TEST_ENCRYPTED_B64,
+        }
+
+        json_file = tmp_path / "test_export.json"
+        json_file.write_text(json.dumps(json_data))
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1
+
+    def test_decrypt_from_null_version(self, tmp_path: Path) -> None:
+        """Test that null version causes error."""
+        from decryptEnteExport import decrypt_from_json
+        import json
+
+        json_data = {
+            "version": None,
+            "kdfParams": {
+                "salt": TEST_SALT_B64,
+                "memLimit": TEST_MEM_LIMIT,
+                "opsLimit": TEST_OPS_LIMIT,
+            },
+            "encryptionNonce": TEST_NONCE_B64,
+            "encryptedData": TEST_ENCRYPTED_B64,
+        }
+
+        json_file = tmp_path / "test_export.json"
+        json_file.write_text(json.dumps(json_data))
+
+        with pytest.raises(SystemExit) as exc_info:
+            decrypt_from_json(str(json_file), TEST_PASSWORD)
+        assert exc_info.value.code == 1

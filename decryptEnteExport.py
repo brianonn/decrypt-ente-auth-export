@@ -131,9 +131,16 @@ def decrypt_from_json(
         with open(file_path) as f:
             data = json.load(f)
 
+        # Extract and validate version
+        version = data.get("version")
+        if version != 1:
+            raise ValueError(
+                f"Unsupported Ente Auth Export format version: {version}. "
+                "Only version 1 is supported."
+            )
+
         # Extract required fields
         try:
-            version = data.get("version", "")
             salt_b64 = data["kdfParams"]["salt"]
             mem_limit = data["kdfParams"]["memLimit"]
             ops_limit = data["kdfParams"]["opsLimit"]

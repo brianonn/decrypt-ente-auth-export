@@ -19,6 +19,8 @@ from decryptEnteExport import (
     TEST_EXPECTED_PLAINTEXT,
     TEST_EXPECTED_DERIVED_KEY_B64,
 )
+from unittest.mock import patch
+import io
 
 
 class TestDeriveKey:
@@ -271,3 +273,23 @@ class TestJsonDecryption:
         with pytest.raises(SystemExit) as exc_info:
             decrypt_from_json(str(json_file), TEST_PASSWORD)
         assert exc_info.value.code == 1
+
+
+class TestCLI:
+    """Tests for CLI argument handling."""
+
+    def test_no_arguments_shows_usage(self, capsys) -> None:
+        """Test that running without arguments displays usage message and exits."""
+        import subprocess
+
+        result = subprocess.run(
+            ["python", "decryptEnteExport.py"],
+            capture_output=True,
+            text=True,
+            cwd=str(Path(__file__).parent.parent),
+        )
+
+        assert result.returncode == 1
+        assert "Usage:" in result.stderr
+        assert "--test" in result.stderr
+        assert "json_file" in result.stderr

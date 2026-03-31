@@ -104,7 +104,7 @@ The input JSON file must have this structure:
 ### Run the Full Test Suite
 
 ```bash
-# Run all 16 tests
+# Run all 17 tests
 pytest tests/test_decrypt.py -v
 
 # Run specific test class
@@ -139,6 +139,9 @@ pytest tests/test_decrypt.py::TestDeriveKey::test_derive_key_with_test_data -v
 - Verify error handling for unsupported version (version 2)
 - Verify error handling for missing version field
 - Verify error handling for null version
+
+**CLI Tests (1 test)**
+- Verify that running without arguments displays helpful usage message
 
 ## Development Tasks
 
